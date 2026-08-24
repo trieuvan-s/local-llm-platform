@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Local Qwen Lab</title><style>
+:root{color-scheme:dark;--bg:#0b0f14;--panel:#141a22;--line:#2c3643;--text:#e8eef6;--muted:#91a0b3;--accent:#5b8cff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 Segoe UI,system-ui,sans-serif;height:100vh;display:flex;flex-direction:column}
+header,footer{background:var(--panel);border-color:var(--line);padding:12px 18px;display:flex;gap:12px;align-items:center}header{border-bottom:1px solid}footer{border-top:1px solid}
+h1{font-size:16px;margin:0}select,textarea,button{font:inherit}select,textarea{background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px}
+#log{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}.msg{padding:12px 14px;border-radius:11px;white-space:pre-wrap;max-width:88%}.user{align-self:flex-end;background:#244b9b}.assistant{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
+textarea{flex:1;min-height:48px;resize:vertical}button{background:var(--accent);color:white;border:0;border-radius:8px;padding:10px 18px;font-weight:600}.meta{color:var(--muted);font-size:12px;margin-top:8px}details{margin-bottom:8px;color:var(--muted)}label{color:var(--muted)}
+</style></head><body>
+<header><h1>Local Qwen Lab</h1><select id="model"></select><label><input id="think" type="checkbox"> Thinking</label><span class="meta">Gateway duy nhất · loopback</span></header>
+<div id="log"></div><footer><textarea id="input" placeholder="Nhập bài test coding hoặc phân tích dữ liệu…"></textarea><button id="send">Gửi</button><button id="reset">Xóa hội thoại</button></footer>
+<script>
+const model=document.querySelector('#model'),think=document.querySelector('#think'),log=document.querySelector('#log'),input=document.querySelector('#input'),send=document.querySelector('#send');let messages=[];
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));function add(cls,text,meta=''){const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=esc(text)+(meta?'<div class="meta">'+esc(meta)+'</div>':'');log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+async function load(){const r=await fetch('/api/models'),j=await r.json();for(const m of j.data||[]){const o=document.createElement('option');o.value=m.id;o.textContent=m.display_name+' · '+m.id;model.appendChild(o)}}
+async function ask(){const text=input.value.trim();if(!text)return;input.value='';messages.push({role:'user',content:text});add('user',text);const box=add('assistant','Đang xử lý…');send.disabled=true;try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model.value,messages,think:think.checked})});const j=await r.json();if(j.error)throw new Error(j.error);const msg=j.choices[0].message;messages.push({role:'assistant',content:msg.content});let html='';if(msg.reasoning_content)html='<details><summary>Suy luận</summary><pre>'+esc(msg.reasoning_content)+'</pre></details>';html+='<div>'+esc(msg.content||'(không có nội dung)')+'</div>';const m=j.local_metrics||{};html+='<div class="meta">'+esc(j.model)+' · '+String(m.wall_seconds||0)+'s · '+String(m.generation_tokens_per_second||0)+' t/s sinh</div>';box.innerHTML=html}catch(e){box.textContent='Lỗi: '+e.message}finally{send.disabled=false}}
+send.onclick=ask;document.querySelector('#reset').onclick=()=>{messages=[];log.innerHTML=''};input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask()}};load();
+</script></body></html>

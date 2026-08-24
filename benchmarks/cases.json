@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "coding_python",
+      "category": "coding",
+      "max_tokens": 1400,
+      "prompt": "Viết hàm Python compute_rolling_zscore(values, window) không dùng thư viện ngoài. Quy ước bắt buộc: chỉ tính khi đã có đủ đúng window quan sát; nếu bất kỳ phần tử nào trong cửa sổ là None thì kết quả tại điểm đó là None; dùng độ lệch chuẩn tổng thể (ddof=0); nếu độ lệch chuẩn bằng 0 thì trả 0.0; tuyệt đối không look-ahead. Kiểm tra input, kèm đúng 6 unittest có expected value số cụ thể và giải thích độ phức tạp. Chỉ trả về mã hoàn chỉnh trong một code block rồi giải thích ngắn."
+    },
+    {
+      "id": "financial_data_analysis",
+      "category": "data_analysis",
+      "max_tokens": 1400,
+      "prompt": "Phân tích bảng giả lập sau (đơn vị tỷ VND): Q1 doanh thu 1000, LNST 80, CFO 20; Q2 doanh thu 1200, LNST 110, CFO -30; Q3 doanh thu 1500, LNST 150, CFO -60; phải thu lần lượt 250, 410, 620; chỉ có tổng tài sản Q3 là 1800, không có tổng tài sản Q1/Q2. Tính tăng trưởng theo quý, biên LNST, CFO/LNST, phải thu/tổng tài sản và nêu cảnh báo chất lượng lợi nhuận. Bắt buộc ghi không đủ dữ liệu cho tỷ lệ Q1/Q2 thay vì dùng Tổng tài sản Q3 thay thế. Các phép tính phải trình bày rõ; không suy diễn đây là dữ liệu doanh nghiệp thật."
+    }
+  ]
+}

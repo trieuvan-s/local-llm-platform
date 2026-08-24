@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "models": [
+    {
+      "id": "qwen3.6:35b",
+      "ollama_model": "qwen3.6:35b",
+      "display_name": "Qwen3.6 35B-A3B",
+      "family": "Qwen3.6",
+      "parameter_class": "35B-A3B MoE",
+      "quantization": "Q4_K_M",
+      "roles": ["batch_research", "deep_analysis", "coding", "data_analysis"],
+      "default_thinking": false,
+      "enabled": true
+    },
+    {
+      "id": "qwen3:14b",
+      "ollama_model": "qwen3:14b",
+      "display_name": "Qwen3 14B",
+      "family": "Qwen3",
+      "parameter_class": "14.8B dense",
+      "quantization": "Q4_K_M",
+      "roles": ["coding", "data_analysis", "fast_local_draft"],
+      "default_thinking": false,
+      "enabled": true
+    }
+  ],
+  "compatibility_aliases": {
+    "fva-qwen36-research-worker": "qwen3.6:35b"
+  }
+}
+
