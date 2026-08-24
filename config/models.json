@@ -19,6 +19,7 @@
       "family": "Qwen3",
       "parameter_class": "14.8B dense",
       "quantization": "Q4_K_M",
+      "num_gpu": 99,
       "roles": ["coding", "data_analysis", "fast_local_draft"],
       "default_thinking": false,
       "enabled": true
@@ -28,4 +29,3 @@
     "fva-qwen36-research-worker": "qwen3.6:35b"
   }
 }
-

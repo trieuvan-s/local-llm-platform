@@ -40,9 +40,13 @@ def call_gateway(model: str, case: dict) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--models", nargs="+", default=["qwen3.6:35b", "qwen3:14b"])
+    parser.add_argument("--cases", default="benchmarks/cases.json")
     args = parser.parse_args()
     load_env()
-    cases = json.loads((ROOT / "benchmarks/cases.json").read_text(encoding="utf-8"))["cases"]
+    cases_path = (ROOT / args.cases).resolve()
+    if ROOT not in cases_path.parents:
+        raise ValueError("benchmark cases must remain inside the platform repository")
+    cases = json.loads(cases_path.read_text(encoding="utf-8"))["cases"]
     records = []
     for model in args.models:
         warmup = {"prompt": "Return exactly: READY", "max_tokens": 16}
@@ -69,7 +73,7 @@ def main() -> int:
             "mean_end_to_end_tokens_per_second": round(statistics.mean(row["end_to_end_tokens_per_second"] for row in rows), 3),
         }
     output = {"generated_at": datetime.now(timezone.utc).isoformat(), "summary": summary, "records": records}
-    target = ROOT / "benchmarks/results" / f"benchmark-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+    target = ROOT / "benchmarks/results" / f"benchmark-{cases_path.stem}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"result_file": str(target), "summary": summary}, ensure_ascii=False, indent=2))

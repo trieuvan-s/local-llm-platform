@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "purpose": "Five bounded workloads for Qwen3-14B num_gpu=99 performance validation",
+  "cases": [
+    {
+      "id": "coding",
+      "category": "coding",
+      "max_tokens": 256,
+      "prompt": "Viết duy nhất một code block Python chứa hàm safe_growth(current, previous). Trả None nếu previous bằng 0 hoặc input không phải số; ngược lại trả tỷ lệ tăng trưởng phần trăm. Kèm đúng 3 assert, không giải thích dài."
+    },
+    {
+      "id": "financial_math",
+      "category": "data_analysis",
+      "max_tokens": 256,
+      "prompt": "Doanh thu tăng từ 800 lên 1000; LNST tăng từ 64 lên 90; CFO là 30. Tính tăng trưởng doanh thu, tăng trưởng LNST, biên LNST mới và CFO/LNST. Trình bày công thức, tối đa 120 từ, ghi rõ đây là dữ liệu giả lập."
+    },
+    {
+      "id": "structured_json",
+      "category": "structured_output",
+      "max_tokens": 256,
+      "prompt": "Chỉ trả JSON hợp lệ, không markdown. Phân loại yêu cầu 'Phân tích BCTC FPT và chỉ ra rủi ro dòng tiền' thành các khóa: intent, agent, requires_sources, risk_level, language."
+    },
+    {
+      "id": "vietnamese_summary",
+      "category": "vietnamese_nlp",
+      "max_tokens": 256,
+      "prompt": "Viết đoạn tổng hợp tiếng Việt tối đa 120 từ: doanh thu tăng nhưng CFO âm hai quý và phải thu tăng nhanh. Giọng điệu chuyên nghiệp, dễ hiểu, không đưa khuyến nghị mua bán."
+    },
+    {
+      "id": "reasoning",
+      "category": "reasoning",
+      "max_tokens": 256,
+      "prompt": "Một công ty có LNST dương 3 quý nhưng CFO lần lượt 10, -20, -40. Nêu đúng 3 giả thuyết cần kiểm tra, phân biệt dữ kiện và giả thuyết, tối đa 140 từ."
+    }
+  ]
+}

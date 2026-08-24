@@ -13,7 +13,7 @@ Standalone Windows 10 runtime for exactly two local Qwen models behind one authe
 ## Models
 
 - `qwen3.6:35b`: deeper batch research/coding/data-analysis worker.
-- `qwen3:14b`: faster coding/data-analysis/draft worker for the A/B evaluation.
+- `qwen3:14b`: experimental coding/data-analysis/draft worker. It currently carries the Owner-requested `num_gpu=99` override. On the GTX 1080 8 GB this full-offload mode is materially slower than Ollama auto-fit; see `docs/QWEN3_14B_FULL_GPU_BENCHMARK_2026-08-24.md`.
 
 ## Windows commands
 

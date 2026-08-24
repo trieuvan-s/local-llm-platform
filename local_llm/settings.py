@@ -28,6 +28,7 @@ class ModelSpec:
     display_name: str
     roles: tuple[str, ...]
     default_thinking: bool
+    num_gpu: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,12 +52,16 @@ class Settings:
             if not isinstance(item, dict) or item.get("enabled") is not True:
                 continue
             model_id = str(item["id"])
+            raw_num_gpu = item.get("num_gpu")
+            if raw_num_gpu is not None and (isinstance(raw_num_gpu, bool) or not isinstance(raw_num_gpu, int) or not 0 <= raw_num_gpu <= 999):
+                raise RuntimeError("model num_gpu is outside approved bounds")
             models[model_id] = ModelSpec(
                 model_id=model_id,
                 ollama_model=str(item["ollama_model"]),
                 display_name=str(item["display_name"]),
                 roles=tuple(map(str, item.get("roles", []))),
                 default_thinking=bool(item.get("default_thinking", False)),
+                num_gpu=raw_num_gpu,
             )
         if set(models) != {"qwen3.6:35b", "qwen3:14b"}:
             raise RuntimeError("exactly two approved canonical models are required")

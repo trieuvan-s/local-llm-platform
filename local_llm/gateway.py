@@ -134,11 +134,16 @@ def create_app(settings: Settings | None = None, client_factory: Any = None) -> 
         think = payload.get("think", spec.default_thinking)
         if not isinstance(think, bool):
             raise HTTPException(status_code=400, detail="think must be boolean")
+        native_options: dict[str, Any] = {
+            "temperature": float(temperature), "num_predict": max_tokens,
+            "num_ctx": cfg.context_length,
+        }
+        if spec.num_gpu is not None:
+            native_options["num_gpu"] = spec.num_gpu
         native: dict[str, Any] = {
             "model": spec.ollama_model, "messages": clean_messages, "stream": False,
             "think": think, "keep_alive": "30m",
-            "options": {"temperature": float(temperature), "num_predict": max_tokens,
-                        "num_ctx": cfg.context_length},
+            "options": native_options,
         }
         response_format = payload.get("response_format")
         if response_format == {"type": "json_object"}:

@@ -59,7 +59,8 @@ class FakeAsyncClient:
 
 def make_settings() -> Settings:
     models = {
-        model_id: ModelSpec(model_id, model_id, model_id, ("coding", "data_analysis"), False)
+        model_id: ModelSpec(model_id, model_id, model_id, ("coding", "data_analysis"), False,
+                            99 if model_id == "qwen3:14b" else None)
         for model_id in ("qwen3.6:35b", "qwen3:14b")
     }
     return Settings(API_KEY, "http://127.0.0.1:11434", 1, 4096, 8192, models,
@@ -93,6 +94,7 @@ class GatewayContractTests(unittest.TestCase):
         self.assertEqual(result.json()["model"], "qwen3:14b")
         self.assertEqual(self.fake.last_payload["format"], "json")
         self.assertEqual(self.fake.last_payload["model"], "qwen3:14b")
+        self.assertEqual(self.fake.last_payload["options"]["num_gpu"], 99)
 
     def test_unknown_model_fails_closed(self) -> None:
         result = self.client.post("/v1/chat/completions", headers=self.headers, json={
@@ -120,6 +122,8 @@ class SettingsTests(unittest.TestCase):
         with patch.dict(os.environ, {"LOCAL_LLM_API_KEY": API_KEY}, clear=False):
             loaded = Settings.load()
         self.assertEqual(set(loaded.models), {"qwen3.6:35b", "qwen3:14b"})
+        self.assertEqual(loaded.models["qwen3:14b"].num_gpu, 99)
+        self.assertIsNone(loaded.models["qwen3.6:35b"].num_gpu)
 
 
 if __name__ == "__main__":
