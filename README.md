@@ -23,6 +23,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start.ps1 -OpenWeb
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\pull-models.ps1 -SkipQwen36
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\status.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\integration-test.ps1 -Model qwen3:14b
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-startup-task.ps1
 .\.runtime\venv\Scripts\python.exe .\benchmarks\run_benchmark.py
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\stop.ps1
 ```
