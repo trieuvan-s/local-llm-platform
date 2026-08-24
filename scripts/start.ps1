@@ -7,6 +7,11 @@ $Runtime = Join-Path $Root '.runtime'; $State = Join-Path $Root 'state'; $Logs =
 $Ollama = Join-Path $Runtime 'ollama\ollama.exe'; $Python = Join-Path $Runtime 'venv\Scripts\python.exe'
 $Models = Join-Path $Runtime 'models'; $UserProfile = Join-Path $Runtime 'ollama-user'
 foreach($leaf in @($Ollama,$Python,(Join-Path $Root '.env'))) { if(-not(Test-Path -LiteralPath $leaf -PathType Leaf)){throw "Missing runtime file: $leaf"} }
+$apiKeyLine=Get-Content -LiteralPath (Join-Path $Root '.env') | Where-Object {$_ -like 'LOCAL_LLM_API_KEY=*'} | Select-Object -First 1
+if(-not $apiKeyLine){throw 'LOCAL_LLM_API_KEY is missing from the platform .env'}
+$apiKey=$apiKeyLine.Substring($apiKeyLine.IndexOf('=')+1).Trim()
+if($apiKey.Length -lt 32){throw 'LOCAL_LLM_API_KEY is too short'}
+$env:LOCAL_LLM_API_KEY=$apiKey
 New-Item -ItemType Directory -Force -Path $State,$Logs,$Models,$UserProfile | Out-Null
 $env:USERPROFILE=$UserProfile; $env:OLLAMA_HOST='127.0.0.1:11434'; $env:OLLAMA_MODELS=$Models
 $env:OLLAMA_KEEP_ALIVE='30m'; $env:OLLAMA_MAX_LOADED_MODELS='1'; $env:OLLAMA_NUM_PARALLEL='1'; $env:OLLAMA_MAX_QUEUE='4'
@@ -26,4 +31,3 @@ try { Invoke-WebRequest http://127.0.0.1:7860 -UseBasicParsing -TimeoutSec 2 | O
 }
 & (Join-Path $PSScriptRoot 'status.ps1')
 if($OpenWebUI){Start-Process 'http://127.0.0.1:7860'}
-

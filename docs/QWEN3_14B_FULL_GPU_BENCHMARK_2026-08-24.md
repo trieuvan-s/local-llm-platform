@@ -29,8 +29,6 @@ Full offload delivered only 20.7% of the auto-fit generation speed. Mean task la
 
 ## Decision evidence
 
-The requested `num_gpu=99` remains configured for Qwen3-14B, but it is not a performance optimization on the current GTX 1080 8 GB. The measured fast configuration is Ollama auto-fit (23/41 layers). Before replacing the model with an 8B model, the next rational comparison is:
+The requested `num_gpu=99` experiment was completed and rejected as an operational configuration on the current GTX 1080 8 GB. Qwen3-14B has been restored to the measured faster Ollama auto-fit mode (23/41 layers). The subsequent Qwen3-8B comparison is recorded in `docs/QWEN3_8B_DECISION_2026-08-24.md`.
 
-1. Restore auto-fit for the operational profile.
-2. Benchmark Qwen3-8B Q4_K_M with the same five workloads.
-3. Compare constraint adherence as well as latency; do not promote based only on tokens/second.
+The 8B candidate was not promoted because it failed the domain-quality Decision Gate despite much higher throughput.

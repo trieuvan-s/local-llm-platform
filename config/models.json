@@ -19,10 +19,20 @@
       "family": "Qwen3",
       "parameter_class": "14.8B dense",
       "quantization": "Q4_K_M",
-      "num_gpu": 99,
       "roles": ["coding", "data_analysis", "fast_local_draft"],
       "default_thinking": false,
       "enabled": true
+    },
+    {
+      "id": "qwen3:8b",
+      "ollama_model": "qwen3:8b",
+      "display_name": "Qwen3 8B",
+      "family": "Qwen3",
+      "parameter_class": "8.2B dense",
+      "quantization": "Q4_K_M",
+      "roles": ["fast_local_draft", "classification", "structured_output", "coding_candidate", "data_analysis_candidate"],
+      "default_thinking": false,
+      "enabled": false
     }
   ],
   "compatibility_aliases": {

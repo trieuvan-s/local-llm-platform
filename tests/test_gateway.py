@@ -43,7 +43,7 @@ class FakeAsyncClient:
     async def get(self, url: str, **__: object) -> FakeResponse:
         if url.endswith("/api/ps"):
             return FakeResponse({"models": [{"name": name} for name in self.loaded_models]})
-        return FakeResponse({"models": [{"name": "qwen3.6:35b"}, {"name": "qwen3:14b"}]})
+        return FakeResponse({"models": [{"name": "qwen3.6:35b"}, {"name": "qwen3:14b"}, {"name": "qwen3:8b"}]})
 
     async def post(self, url: str, json: dict, **__: object) -> FakeResponse:
         self.last_payload = json
@@ -59,8 +59,7 @@ class FakeAsyncClient:
 
 def make_settings() -> Settings:
     models = {
-        model_id: ModelSpec(model_id, model_id, model_id, ("coding", "data_analysis"), False,
-                            99 if model_id == "qwen3:14b" else None)
+        model_id: ModelSpec(model_id, model_id, model_id, ("coding", "data_analysis"), False, None)
         for model_id in ("qwen3.6:35b", "qwen3:14b")
     }
     return Settings(API_KEY, "http://127.0.0.1:11434", 1, 4096, 8192, models,
@@ -76,12 +75,12 @@ class GatewayContractTests(unittest.TestCase):
     def test_authentication_is_required(self) -> None:
         self.assertEqual(self.client.get("/v1/models").status_code, 401)
 
-    def test_only_two_canonical_models_are_discoverable(self) -> None:
+    def test_only_two_enabled_canonical_models_are_discoverable(self) -> None:
         result = self.client.get("/v1/models", headers=self.headers)
         self.assertEqual(result.status_code, 200)
         self.assertEqual({item["id"] for item in result.json()["data"]}, {"qwen3.6:35b", "qwen3:14b"})
 
-    def test_ready_checks_both_models(self) -> None:
+    def test_ready_checks_all_registered_models(self) -> None:
         result = self.client.get("/health/ready", headers=self.headers)
         self.assertEqual(result.json(), {"status": "ready", "missing_models": []})
 
@@ -94,7 +93,7 @@ class GatewayContractTests(unittest.TestCase):
         self.assertEqual(result.json()["model"], "qwen3:14b")
         self.assertEqual(self.fake.last_payload["format"], "json")
         self.assertEqual(self.fake.last_payload["model"], "qwen3:14b")
-        self.assertEqual(self.fake.last_payload["options"]["num_gpu"], 99)
+        self.assertNotIn("num_gpu", self.fake.last_payload["options"])
 
     def test_unknown_model_fails_closed(self) -> None:
         result = self.client.post("/v1/chat/completions", headers=self.headers, json={
@@ -122,7 +121,7 @@ class SettingsTests(unittest.TestCase):
         with patch.dict(os.environ, {"LOCAL_LLM_API_KEY": API_KEY}, clear=False):
             loaded = Settings.load()
         self.assertEqual(set(loaded.models), {"qwen3.6:35b", "qwen3:14b"})
-        self.assertEqual(loaded.models["qwen3:14b"].num_gpu, 99)
+        self.assertIsNone(loaded.models["qwen3:14b"].num_gpu)
         self.assertIsNone(loaded.models["qwen3.6:35b"].num_gpu)
 
 
