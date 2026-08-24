@@ -33,5 +33,5 @@ Quality result: fewer than four workloads passed and a material domain terminolo
 ## Final state
 
 - Qwen3-14B remains enabled with Ollama auto-fit.
-- Qwen3-8B remains installed but is disabled in gateway discovery and routing.
-- Qwen3-8B may later be reconsidered only for deterministic classification or schema-constrained extraction with validator/repair, not as a drop-in coding or financial-analysis replacement.
+- On Owner request, Qwen3-8B is enabled in gateway discovery and WebUI for direct evaluation; this is test availability, not a quality-gate promotion.
+- Qwen3-8B is approved only for deterministic classification, routing, short drafts, or schema-constrained extraction with validator/repair during evaluation, not as a drop-in coding or financial-analysis replacement.

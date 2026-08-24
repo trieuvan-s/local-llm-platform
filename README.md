@@ -14,7 +14,7 @@ Standalone Windows 10 runtime for exactly two local Qwen models behind one authe
 
 - `qwen3.6:35b`: deeper batch research/coding/data-analysis worker.
 - `qwen3:14b`: experimental coding/data-analysis/draft worker using Ollama auto-fit. The rejected full-offload experiment is documented in `docs/QWEN3_14B_FULL_GPU_BENCHMARK_2026-08-24.md`.
-- `qwen3:8b`: installed benchmark candidate, disabled in the gateway because it failed the quality Decision Gate. It remains in the model store for future constrained-task experiments.
+- `qwen3:8b`: Owner-enabled evaluation model for fast, constrained-task experiments. It failed the general replacement quality Decision Gate, so availability in WebUI/Gateway does not authorize promotion to primary coding or financial-analysis worker.
 
 ## Windows commands
 

@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+APPROVED_CANONICAL_MODELS = {"qwen3.6:35b", "qwen3:14b", "qwen3:8b"}
 
 
 def load_dotenv(path: Path) -> None:
@@ -63,8 +64,10 @@ class Settings:
                 default_thinking=bool(item.get("default_thinking", False)),
                 num_gpu=raw_num_gpu,
             )
-        if set(models) != {"qwen3.6:35b", "qwen3:14b"}:
-            raise RuntimeError("exactly two approved canonical models are required")
+        if not models:
+            raise RuntimeError("at least one approved canonical model must be enabled")
+        if not set(models).issubset(APPROVED_CANONICAL_MODELS):
+            raise RuntimeError("model registry contains an unapproved canonical model")
         aliases = {str(k): str(v) for k, v in payload.get("compatibility_aliases", {}).items()}
         if any(target not in models for target in aliases.values()):
             raise RuntimeError("model alias target is not approved")

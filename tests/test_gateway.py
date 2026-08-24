@@ -60,7 +60,7 @@ class FakeAsyncClient:
 def make_settings() -> Settings:
     models = {
         model_id: ModelSpec(model_id, model_id, model_id, ("coding", "data_analysis"), False, None)
-        for model_id in ("qwen3.6:35b", "qwen3:14b")
+        for model_id in ("qwen3.6:35b", "qwen3:14b", "qwen3:8b")
     }
     return Settings(API_KEY, "http://127.0.0.1:11434", 1, 4096, 8192, models,
                     {"fva-qwen36-research-worker": "qwen3.6:35b"})
@@ -75,10 +75,13 @@ class GatewayContractTests(unittest.TestCase):
     def test_authentication_is_required(self) -> None:
         self.assertEqual(self.client.get("/v1/models").status_code, 401)
 
-    def test_only_two_enabled_canonical_models_are_discoverable(self) -> None:
+    def test_three_enabled_canonical_models_are_discoverable(self) -> None:
         result = self.client.get("/v1/models", headers=self.headers)
         self.assertEqual(result.status_code, 200)
-        self.assertEqual({item["id"] for item in result.json()["data"]}, {"qwen3.6:35b", "qwen3:14b"})
+        self.assertEqual(
+            {item["id"] for item in result.json()["data"]},
+            {"qwen3.6:35b", "qwen3:14b", "qwen3:8b"},
+        )
 
     def test_ready_checks_all_registered_models(self) -> None:
         result = self.client.get("/health/ready", headers=self.headers)
@@ -120,7 +123,8 @@ class SettingsTests(unittest.TestCase):
     def test_registry_loads_only_with_external_secret(self) -> None:
         with patch.dict(os.environ, {"LOCAL_LLM_API_KEY": API_KEY}, clear=False):
             loaded = Settings.load()
-        self.assertEqual(set(loaded.models), {"qwen3.6:35b", "qwen3:14b"})
+        self.assertEqual(set(loaded.models), {"qwen3.6:35b", "qwen3:14b", "qwen3:8b"})
+        self.assertIsNone(loaded.models["qwen3:8b"].num_gpu)
         self.assertIsNone(loaded.models["qwen3:14b"].num_gpu)
         self.assertIsNone(loaded.models["qwen3.6:35b"].num_gpu)
 
