@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Local LLM Platform
 
 Standalone Windows 10 runtime for three local Qwen models behind one authenticated, OpenAI-compatible endpoint.
@@ -77,3 +78,7 @@ $env:LOCAL_LLM_API_KEY=('a' * 64)
 ```
 
 Benchmark output includes raw answers, wall time, token usage, and tokens/second. Quality must still be reviewed by a human; throughput alone does not determine the production role.
+=======
+# local-llm-platform
+Dự án thiết lập nền tảng cài đặt các model LLM local trên nền tảng Ollama
+>>>>>>> e909e3c98c6ff9818e3fccbbf929071cd4dc9880
