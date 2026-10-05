@@ -6,3 +6,8 @@ benchmarks/results/
 benchmarks/legacy/
 __pycache__/
 *.py[cod]
+
+.env
+.venv
+__pycache__/
+

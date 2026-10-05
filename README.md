@@ -1,13 +1,13 @@
 # Local LLM Platform
 
-Standalone Windows 10 runtime for exactly two local Qwen models behind one authenticated, OpenAI-compatible endpoint.
+Standalone Windows 10 runtime for three local Qwen models behind one authenticated, OpenAI-compatible endpoint.
 
 ## Boundary
 
 - Runtime, model blobs, configuration, logs, tests, and benchmark results live under this directory.
 - Ollama is an internal loopback service on `127.0.0.1:11434`; applications must not call it directly.
-- The only consumer endpoint is `http://127.0.0.1:8080/v1` with a Bearer token stored in the local `.env`.
-- The local WebUI is `http://127.0.0.1:7860` and also calls the gateway, never Ollama.
+- The user-facing API endpoint is the authenticated Gateway at `http://<tailscale-ip>:8080/v1` with a Bearer token stored in the local `.env`.
+- The browser UI is protected with Basic Auth and runs at `http://<tailscale-ip>:7860/`; it also calls the gateway, never Ollama.
 - Only one model is kept loaded at a time to fit the target host. Switching models can cause a cold-load delay.
 
 ## Models
@@ -40,12 +40,31 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\migrate-runtime.ps
 Configure Hermes or a Control Plane with:
 
 ```text
-API base: http://127.0.0.1:8080/v1
+API base, local machine:  http://<tailscale-ip>:8080/v1
+API base, remote device:   http://<tailscale-ip>:8080/v1
 API key:  value of LOCAL_LLM_API_KEY in this platform's .env
-Model:    qwen3:14b or qwen3.6:35b
+Model:    qwen3.6:35b, qwen3:14b, or qwen3:8b
 ```
 
 Never copy the token into source control. The compatibility alias `fva-qwen36-research-worker` remains accepted but is intentionally hidden from model discovery.
+
+For Tailscale use, keep `LOCAL_LLM_OLLAMA_BASE_URL=http://127.0.0.1:11434`, bind `LOCAL_LLM_GATEWAY_HOST` to the host's Tailscale IP, and keep `LOCAL_LLM_ALLOWED_CLIENT_CIDRS` limited to loopback plus the Tailscale CIDR. External systems must call the Gateway, not Ollama port `11434`.
+
+If a second Tailscale device cannot reach port `8080`, run an elevated PowerShell and execute:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-tailscale-firewall-rule.ps1
+```
+
+For browser access from the approved Tailscale client or from the host itself, open:
+
+```text
+http://<tailscale-ip>:7860/
+```
+
+The browser will ask for credentials. Use `LOCAL_LLM_WEBUI_USERNAME` and `LOCAL_LLM_WEBUI_PASSWORD` from the local `.env`. The WebUI client allowlist is separate from the Gateway allowlist; by default it should be narrower and contain only localhost plus the approved client Tailscale IP.
+
+The WebUI stores multiple test conversations in the browser, supports `Thinking mode`, and can send a small test function schema when `Tool Calling` is enabled. Tool calls are shown in the assistant response when the model emits them. For native Qwen tool calling, keep temperature in the `0.1` to `0.3` range; when Tool Calling is enabled, the WebUI automatically keeps the submitted temperature inside that range to reduce schema drift. Thinking mode can be enabled at the same time so Qwen3.6 can return reasoning alongside tool-call decisions.
 
 The gateway currently rejects streaming requests explicitly. It supports non-streaming `/v1/chat/completions`, `/v1/models`, and authenticated readiness checks. This is the stable phase-one contract for organizational consumers.
 

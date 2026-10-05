@@ -4,9 +4,9 @@ Hermes and Control Plane are consumers, not runtime owners.
 
 ```yaml
 provider: openai_compatible
-base_url: http://127.0.0.1:8080/v1
+base_url: http://<tailscale-ip>:8080/v1
 api_key_env: LOCAL_LLM_API_KEY
-model: qwen3.6:35b  # or qwen3:14b for experimental workloads
+model: qwen3.6:35b  # qwen3:14b and qwen3:8b are also available
 stream: false
 ```
 
@@ -18,6 +18,6 @@ Supported phase-one routes:
 - `POST /v1/chat/completions` with `stream: false`
 - `GET /health/ready`
 
-Readiness and model discovery require the same Bearer token. The gateway returns only the two canonical model IDs. A legacy Qwen3.6 alias is accepted for compatibility but hidden from discovery.
+Readiness and model discovery require the same Bearer token. The gateway returns the three canonical model IDs. A legacy Qwen3.6 alias is accepted for compatibility but hidden from discovery.
 
 Model changes are expensive and serialized. Control planes should batch work by model and avoid alternating model IDs request-by-request. The queue should treat this service as a single-capacity worker.

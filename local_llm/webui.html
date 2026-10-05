@@ -1,19 +1,62 @@
 <!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Local Qwen Lab</title><style>
-:root{color-scheme:dark;--bg:#0b0f14;--panel:#141a22;--line:#2c3643;--text:#e8eef6;--muted:#91a0b3;--accent:#5b8cff}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 Segoe UI,system-ui,sans-serif;height:100vh;display:flex;flex-direction:column}
-header,footer{background:var(--panel);border-color:var(--line);padding:12px 18px;display:flex;gap:12px;align-items:center}header{border-bottom:1px solid}footer{border-top:1px solid}
-h1{font-size:16px;margin:0}select,textarea,button{font:inherit}select,textarea{background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px}
-#log{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}.msg{padding:12px 14px;border-radius:11px;white-space:pre-wrap;max-width:88%}.user{align-self:flex-end;background:#244b9b}.assistant{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
-textarea{flex:1;min-height:48px;resize:vertical}button{background:var(--accent);color:white;border:0;border-radius:8px;padding:10px 18px;font-weight:600}.meta{color:var(--muted);font-size:12px;margin-top:8px}details{margin-bottom:8px;color:var(--muted)}label{color:var(--muted)}
-</style></head><body>
-<header><h1>Local Qwen Lab</h1><select id="model"></select><label><input id="think" type="checkbox"> Thinking</label><span class="meta">Gateway duy nhất · loopback</span></header>
-<div id="log"></div><footer><textarea id="input" placeholder="Nhập bài test coding hoặc phân tích dữ liệu…"></textarea><button id="send">Gửi</button><button id="reset">Xóa hội thoại</button></footer>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Local Qwen Lab</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0f14;--panel:#121923;--line:#2a3544;--text:#edf3fb;--muted:#95a6ba;--accent:#5b8cff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 "Segoe UI",system-ui,sans-serif;height:100vh;display:grid;grid-template-columns:280px 1fr}
+button,select,textarea,input{font:inherit}button{border:0;border-radius:8px;background:var(--accent);color:#fff;padding:9px 12px;font-weight:650;cursor:pointer}button.secondary{background:#223044;color:var(--text)}
+aside{border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-width:0}.side-head{padding:14px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}.side-head h1{font-size:16px;margin:0;flex:1}
+#sessions{padding:10px;overflow:auto;display:flex;flex-direction:column;gap:8px}.session{background:#0f1620;color:var(--text);border:1px solid var(--line);text-align:left;display:block;width:100%;padding:10px;border-radius:8px}.session.active{border-color:var(--accent);background:#17243a}.session .title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.session .meta{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+main{display:grid;grid-template-rows:auto 1fr auto;min-width:0}.top{background:var(--panel);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.top select{background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px}.model{min-width:250px}.check{color:var(--muted);display:flex;gap:7px;align-items:center}.status{color:var(--muted);font-size:12px;margin-left:auto}
+#log{overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}.msg{padding:12px 14px;border-radius:11px;white-space:pre-wrap;max-width:min(88%,920px)}.user{align-self:flex-end;background:#244b9b}.assistant{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}.meta{color:var(--muted);font-size:12px;margin-top:8px}.tool,.reason{margin-top:10px;background:#0b1119;border:1px solid var(--line);border-radius:8px;padding:10px;color:#d7e7ff;white-space:pre-wrap}details{margin-bottom:8px;color:var(--muted)}pre{white-space:pre-wrap;margin:8px 0 0}
+footer{background:var(--panel);border-top:1px solid var(--line);padding:12px 16px;display:grid;grid-template-columns:1fr auto auto;gap:10px}textarea{background:#0e141c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;min-height:52px;max-height:170px;resize:vertical}
+@media(max-width:760px){body{grid-template-columns:1fr}aside{display:none}.status{width:100%;margin-left:0}footer{grid-template-columns:1fr}.model{min-width:100%}}
+</style>
+</head>
+<body>
+<aside>
+  <div class="side-head"><h1>Local Qwen Lab</h1><button id="newChat">Mới</button></div>
+  <div id="sessions"></div>
+</aside>
+<main>
+  <div class="top">
+    <select id="model" class="model"></select>
+    <label class="check"><input id="think" type="checkbox"> Thinking mode</label>
+    <label class="check"><input id="tools" type="checkbox"> Tool Calling</label>
+    <label class="check">Temperature <select id="temperature"><option value="0.1">0.1</option><option value="0.2" selected>0.2</option><option value="0.3">0.3</option><option value="0.5">0.5</option><option value="0.7">0.7</option></select></label>
+    <span id="status" class="status">Sẵn sàng</span>
+  </div>
+  <div id="log"></div>
+  <footer>
+    <textarea id="input" placeholder="Nhập bài test Qwen từ client..."></textarea>
+    <button id="send">Gửi</button>
+    <button id="clear" class="secondary">Xóa chat</button>
+  </footer>
+</main>
 <script>
-const model=document.querySelector('#model'),think=document.querySelector('#think'),log=document.querySelector('#log'),input=document.querySelector('#input'),send=document.querySelector('#send');let messages=[];
-const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));function add(cls,text,meta=''){const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=esc(text)+(meta?'<div class="meta">'+esc(meta)+'</div>':'');log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
-async function load(){const r=await fetch('/api/models'),j=await r.json();for(const m of j.data||[]){const o=document.createElement('option');o.value=m.id;o.textContent=m.display_name+' · '+m.id;model.appendChild(o)}}
-async function ask(){const text=input.value.trim();if(!text)return;input.value='';messages.push({role:'user',content:text});add('user',text);const box=add('assistant','Đang xử lý…');send.disabled=true;try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model.value,messages,think:think.checked})});const j=await r.json();if(j.error)throw new Error(j.error);const msg=j.choices[0].message;messages.push({role:'assistant',content:msg.content});let html='';if(msg.reasoning_content)html='<details><summary>Suy luận</summary><pre>'+esc(msg.reasoning_content)+'</pre></details>';html+='<div>'+esc(msg.content||'(không có nội dung)')+'</div>';const m=j.local_metrics||{};html+='<div class="meta">'+esc(j.model)+' · '+String(m.wall_seconds||0)+'s · '+String(m.generation_tokens_per_second||0)+' t/s sinh</div>';box.innerHTML=html}catch(e){box.textContent='Lỗi: '+e.message}finally{send.disabled=false}}
-send.onclick=ask;document.querySelector('#reset').onclick=()=>{messages=[];log.innerHTML=''};input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask()}};load();
-</script></body></html>
+const storeKey='fva.localQwen.sessions.v1';
+const model=document.querySelector('#model'),think=document.querySelector('#think'),tools=document.querySelector('#tools'),temperature=document.querySelector('#temperature'),log=document.querySelector('#log'),input=document.querySelector('#input'),send=document.querySelector('#send'),statusEl=document.querySelector('#status'),sessionsEl=document.querySelector('#sessions');
+let sessions=[],activeId='';
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const now=()=>new Date().toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'});
+function save(){localStorage.setItem(storeKey,JSON.stringify({activeId,sessions}))}
+function loadStore(){try{const raw=JSON.parse(localStorage.getItem(storeKey)||'{}');sessions=Array.isArray(raw.sessions)?raw.sessions:[];activeId=raw.activeId||''}catch{sessions=[];activeId=''}if(!sessions.length)newSession();if(!sessions.some(s=>s.id===activeId))activeId=sessions[0].id}
+function active(){return sessions.find(s=>s.id===activeId)}
+function newSession(){const s={id:String(Date.now())+Math.random().toString(16).slice(2),title:'Cuộc trao đổi mới',created:now(),messages:[]};sessions.unshift(s);activeId=s.id;save();renderSessions();renderLog();input.focus()}
+function renderSessions(){sessionsEl.innerHTML='';for(const s of sessions){const b=document.createElement('button');b.className='session'+(s.id===activeId?' active':'');b.innerHTML='<span class="title">'+esc(s.title)+'</span><span class="meta">'+esc(s.created)+' · '+s.messages.length+' tin</span>';b.onclick=()=>{activeId=s.id;save();renderSessions();renderLog()};sessionsEl.appendChild(b)}}
+function addBubble(cls,text,meta=''){const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=esc(text)+(meta?'<div class="meta">'+esc(meta)+'</div>':'');log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+function renderAssistant(d,msg,meta){let html='';if(msg.reasoning_content)html+='<details open><summary>Thinking process</summary><pre>'+esc(msg.reasoning_content)+'</pre></details>';html+='<div>'+esc(msg.content||'(không có nội dung)')+'</div>';if(Array.isArray(msg.tool_calls)&&msg.tool_calls.length){html+='<div class="tool">Tool calls\n'+esc(JSON.stringify(msg.tool_calls,null,2))+'</div>'}if(Array.isArray(msg.tool_results)&&msg.tool_results.length){html+='<div class="tool">Tool results\n'+esc(JSON.stringify(msg.tool_results,null,2))+'</div>'}if(meta)html+='<div class="meta">'+esc(meta)+'</div>';d.innerHTML=html}
+function renderLog(){log.innerHTML='';const s=active();for(const m of s.messages){if(m.role==='user')addBubble('user',m.content);else{const box=addBubble('assistant','');renderAssistant(box,m,m.meta||'')}}log.scrollTop=log.scrollHeight}
+function toolTemp(){const value=Number(temperature.value);return Math.min(0.3,Math.max(0.1,value||0.2))}
+function messageForGateway(m){let content=m.content||'';if(!content&&Array.isArray(m.tool_calls)&&m.tool_calls.length)content='Previous assistant tool calls: '+JSON.stringify(m.tool_calls);if(!content&&Array.isArray(m.tool_results)&&m.tool_results.length)content='Previous web tool results: '+JSON.stringify(m.tool_results);return{role:m.role,content}}
+function syncToolDefaults(){if(tools.checked&&Number(temperature.value)>0.3)temperature.value='0.2';statusEl.textContent=tools.checked?'Tool Calling bật web_search/web_fetch khi cần dữ liệu mới.':'Sẵn sàng'}
+async function loadModels(){statusEl.textContent='Đang tải model...';const r=await fetch('/api/models'),j=await r.json();model.innerHTML='';for(const m of j.data||[]){const o=document.createElement('option');o.value=m.id;o.textContent=m.display_name+' · '+m.id;model.appendChild(o)}statusEl.textContent='Sẵn sàng'}
+async function ask(){const text=input.value.trim(),s=active();if(!text)return;input.value='';if(s.title==='Cuộc trao đổi mới')s.title=text.slice(0,42);const user={role:'user',content:text};s.messages.push(user);renderSessions();addBubble('user',text);const box=addBubble('assistant','Đang xử lý...');send.disabled=true;const temp=tools.checked?toolTemp():Number(temperature.value||0.2);statusEl.textContent=tools.checked&&think.checked?'Qwen đang suy luận và chọn tool...':'Qwen đang xử lý...';try{const payload={model:model.value,messages:s.messages.map(messageForGateway),think:think.checked,temperature:temp};if(tools.checked){payload.enable_web_tools=true;payload.auto_execute_tools=true}const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const j=await r.json();if(j.error)throw new Error(j.error);const msg=j.choices[0].message;const m=j.local_metrics||{};msg.meta=j.model+' · temp '+temp+' · '+String(m.wall_seconds||0)+'s · '+String(m.generation_tokens_per_second||0)+' t/s · thinking '+(m.thinking_enabled?'on':'off')+(tools.checked?' · web tools on':'')+(m.tools_auto_executed?' · executed':'');s.messages.push(msg);renderAssistant(box,msg,msg.meta);save();renderSessions()}catch(e){box.textContent='Lỗi: '+e.message;statusEl.textContent='Có lỗi'}finally{send.disabled=false;if(statusEl.textContent!=='Có lỗi')syncToolDefaults()}}
+document.querySelector('#newChat').onclick=newSession;document.querySelector('#clear').onclick=()=>{active().messages=[];active().title='Cuộc trao đổi mới';save();renderSessions();renderLog();input.focus()};tools.onchange=syncToolDefaults;temperature.onchange=syncToolDefaults;send.onclick=ask;input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask()}};
+loadStore();renderSessions();renderLog();loadModels().catch(e=>{statusEl.textContent='Không tải được model';addBubble('assistant','Lỗi tải model: '+e.message)});
+</script>
+</body>
+</html>

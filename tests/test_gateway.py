@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import ipaddress
 import unittest
 from unittest.mock import patch
 
@@ -52,7 +53,8 @@ class FakeAsyncClient:
             self.loaded_models = [name for name in self.loaded_models if name != json["model"]]
             return FakeResponse({"done": True})
         return FakeResponse({
-            "message": {"role": "assistant", "content": '{"ok":true}'},
+            "message": {"role": "assistant", "content": '{"ok":true}',
+                        "tool_calls": json.get("tool_calls", [])},
             "prompt_eval_count": 7, "eval_count": 3, "done_reason": "stop",
         })
 
@@ -62,7 +64,9 @@ def make_settings() -> Settings:
         model_id: ModelSpec(model_id, model_id, model_id, ("coding", "data_analysis"), False, None)
         for model_id in ("qwen3.6:35b", "qwen3:14b", "qwen3:8b")
     }
-    return Settings(API_KEY, "http://127.0.0.1:11434", 1, 4096, 8192, models,
+    return Settings(API_KEY, "http://127.0.0.1:11434",
+                    (ipaddress.ip_network("127.0.0.1/32"), ipaddress.ip_network("::1/128")),
+                    1, 4096, 8192, models,
                     {"fva-qwen36-research-worker": "qwen3.6:35b"})
 
 
@@ -117,6 +121,37 @@ class GatewayContractTests(unittest.TestCase):
             "model": "qwen3:14b", "messages": [{"role": "user", "content": "hello"}], "stream": True,
         })
         self.assertEqual(result.status_code, 400)
+
+    def test_tools_are_forwarded_to_ollama(self) -> None:
+        tools = [{"type": "function", "function": {
+            "name": "record_test_result",
+            "description": "Record a result",
+            "parameters": {"type": "object", "properties": {"summary": {"type": "string"}}},
+        }}]
+        result = self.client.post("/v1/chat/completions", headers=self.headers, json={
+            "model": "qwen3:14b",
+            "messages": [{"role": "user", "content": "Use a tool"}],
+            "stream": False,
+            "tools": tools,
+        })
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(self.fake.last_payload["tools"], tools)
+
+    def test_low_temperature_is_forwarded_for_tool_calling(self) -> None:
+        result = self.client.post("/v1/chat/completions", headers=self.headers, json={
+            "model": "qwen3.6:35b",
+            "messages": [{"role": "user", "content": "Return a tool call"}],
+            "stream": False,
+            "think": True,
+            "temperature": 0.1,
+            "tools": [{"type": "function", "function": {
+                "name": "record_test_result",
+                "parameters": {"type": "object", "properties": {}},
+            }}],
+        })
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(self.fake.last_payload["options"]["temperature"], 0.1)
+        self.assertTrue(self.fake.last_payload["think"])
 
 
 class SettingsTests(unittest.TestCase):

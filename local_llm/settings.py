@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -36,6 +37,7 @@ class ModelSpec:
 class Settings:
     api_key: str
     ollama_base_url: str
+    allowed_client_networks: tuple[ipaddress._BaseNetwork, ...]
     max_concurrency: int
     max_tokens: int
     context_length: int
@@ -77,6 +79,9 @@ class Settings:
         ollama = os.getenv("LOCAL_LLM_OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
         if ollama != "http://127.0.0.1:11434":
             raise RuntimeError("Ollama upstream must remain loopback-only")
+        allowed_client_networks = _parse_allowed_client_networks(
+            os.getenv("LOCAL_LLM_ALLOWED_CLIENT_CIDRS", "127.0.0.1/32,::1/128")
+        )
         max_concurrency = int(os.getenv("LOCAL_LLM_MAX_CONCURRENCY", "1"))
         max_tokens = int(os.getenv("LOCAL_LLM_MAX_TOKENS", "4096"))
         context_length = int(os.getenv("LOCAL_LLM_CONTEXT_LENGTH", "8192"))
@@ -84,7 +89,7 @@ class Settings:
             raise RuntimeError("LOCAL_LLM_MAX_CONCURRENCY must be 1 or 2")
         if not 256 <= max_tokens <= 8192 or not 2048 <= context_length <= 32768:
             raise RuntimeError("token/context limits are outside approved bounds")
-        return cls(api_key, ollama, max_concurrency, max_tokens, context_length, models, aliases)
+        return cls(api_key, ollama, allowed_client_networks, max_concurrency, max_tokens, context_length, models, aliases)
 
     def resolve_model(self, requested: str) -> ModelSpec:
         canonical = self.aliases.get(requested, requested)
@@ -92,3 +97,21 @@ class Settings:
             return self.models[canonical]
         except KeyError as exc:
             raise ValueError("model is not allowlisted") from exc
+
+
+def _parse_allowed_client_networks(value: str) -> tuple[ipaddress._BaseNetwork, ...]:
+    networks: list[ipaddress._BaseNetwork] = []
+    for raw in value.split(","):
+        item = raw.strip()
+        if not item:
+            continue
+        try:
+            networks.append(ipaddress.ip_network(item, strict=False))
+        except ValueError as exc:
+            raise RuntimeError("LOCAL_LLM_ALLOWED_CLIENT_CIDRS contains an invalid CIDR") from exc
+    if not networks:
+        raise RuntimeError("LOCAL_LLM_ALLOWED_CLIENT_CIDRS must allow at least loopback")
+    loopbacks = {ipaddress.ip_network("127.0.0.1/32"), ipaddress.ip_network("::1/128")}
+    if not loopbacks.issubset(set(networks)):
+        raise RuntimeError("LOCAL_LLM_ALLOWED_CLIENT_CIDRS must include loopback")
+    return tuple(networks)

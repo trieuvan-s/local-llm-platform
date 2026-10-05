@@ -5,9 +5,9 @@ Hermes / Control Plane / local WebUI
                  |
                  | OpenAI-compatible + Bearer
                  v
-       127.0.0.1:8080/v1
+       <tailscale-ip>:8080/v1
         Local LLM Gateway
-       - two-model allowlist
+       - three-model allowlist
        - request bounds
        - concurrency = 1
        - model-switch lock
@@ -17,13 +17,13 @@ Hermes / Control Plane / local WebUI
                  v
        127.0.0.1:11434
               Ollama
-          /             \
- qwen3.6:35b          qwen3:14b
+          /       |       \
+ qwen3.6:35b   qwen3:14b   qwen3:8b
  (one resident model at a time)
 ```
 
-The WebUI on `127.0.0.1:7860` is a consumer of the gateway. It does not know the Ollama endpoint or the API token. External consumers must never use port 11434.
+The WebUI on `<tailscale-ip>:7860` is a consumer of the gateway. It does not know the Ollama endpoint or the API token. External consumers must never use port 11434.
 
 On the current Windows host, switching from one large model to another must be serialized. The gateway asks Ollama to unload the previous resident model and waits before loading the next. The stop script terminates the full Ollama child-process tree to prevent orphan `llama-server` processes from retaining committed memory.
 
-This phase binds all ports to loopback. It is suitable for Hermes and Control Plane processes on the same host. Remote-host access requires a separately approved authenticated reverse proxy, firewall allowlist, TLS, and secret rotation; do not bind Ollama publicly.
+Tailscale access is supported through the authenticated Gateway only. Ollama remains loopback-only on `127.0.0.1:11434`; both local and remote consumers must call `http://<tailscale-ip>:8080/v1` with the Bearer token from the local `.env`. The Gateway enforces the configured client CIDR allowlist before forwarding to Ollama. The WebUI is available on the same Tailscale-bound host port and follows the same access pattern.
